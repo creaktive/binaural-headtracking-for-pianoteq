@@ -23,18 +23,66 @@ tfjsWasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
         tfjsWasm.version_wasm}/dist/`);
 
-import * as faceDetection from '@tensorflow-models/face-detection';
-
 import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE, createDetector} from './shared/params';
 import {setupStats} from './shared/stats_panel';
 import {setBackendAndEnvFlags} from './shared/util';
 
-let detector, camera, stats;
-let startInferenceTime, numInferences = 0;
-let inferenceTimeSum = 0, lastPanelUpdate = 0;
+let detector;
+let camera;
+let stats;
+let startInferenceTime;
+let numInferences = 0;
+let inferenceTimeSum = 0;
+let lastPanelUpdate = 0;
 let rafId;
+
+let frame = 0;
+const skip = 10;
+
+async function headTrackingToPianoteq(faces, scale = 400) {
+  const LEFT = 0;
+  const RIGHT = 1;
+  const ear = [
+    {x: 0, y: 0},
+    {x: 0, y: 0},
+  ];
+
+  faces[0].keypoints.forEach((keypoint) => {
+    switch (keypoint.name) {
+      case 'leftEarTragion': ear[LEFT] = keypoint; break;
+      case 'rightEarTragion': ear[RIGHT] = keypoint; break;
+      default:
+    }
+  });
+
+  const center = {x: camera.video.width / 2, y: camera.video.height / 2};
+  center.x -= ear[LEFT].x - Math.abs(ear[LEFT].x - ear[RIGHT].x) / 2;
+  center.y -= ear[LEFT].y - Math.abs(ear[LEFT].y - ear[RIGHT].y) / 2;
+  center.x /= scale;
+  center.y /= scale;
+
+  console.log(center);
+
+  const payload = {
+    id: 1,
+    jsonrpc: '2.0',
+    method: 'setParameters',
+    params: {
+      list: [
+        {'id': 'Head.X', 'name': 'Head X position', 'text': `${center.x}`},
+        {'id': 'Head.Y', 'name': 'Head Y position', 'text': `${center.y}`},
+      ],
+    },
+  };
+
+  fetch('http://localhost:8081/jsonrpc', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  }).then();
+}
 
 async function checkGuiUpdate() {
   if (STATE.isTargetFPSChanged || STATE.isSizeOptionChanged) {
@@ -126,6 +174,9 @@ async function renderResult() {
   // different model. If during model change, the result is from an old model,
   // which shouldn't be rendered.
   if (faces && faces.length > 0 && !STATE.isModelChanged) {
+    if (frame++ % skip === 0) {
+      headTrackingToPianoteq(faces);
+    }
     camera.drawResults(
         faces, STATE.modelConfig.boundingBox, STATE.modelConfig.keypoints);
   }
