@@ -41,6 +41,7 @@ let headPos = {x: 0, y: 0};
 const updateInterval = 1000 / 10; // 10 Hz
 const endpointUrl = document.getElementById('jsonrpc');
 const linkStatus = document.getElementById('link');
+const scaleSlider = document.getElementById('scale');
 
 async function sendToPianoTeq() {
   console.log(headPos);
@@ -51,8 +52,8 @@ async function sendToPianoTeq() {
     method: 'setParameters',
     params: {
       list: [
-        {'id': 'Head.X', 'name': 'Head X position', 'text': `${headPos.x}`},
-        {'id': 'Head.Y', 'name': 'Head Y position', 'text': `${headPos.y}`},
+        {id: 'Head.X', name: 'Head X position', normalized_value: headPos.x},
+        {id: 'Head.Y', name: 'Head Y position', normalized_value: headPos.y},
       ],
     },
   };
@@ -69,7 +70,7 @@ async function sendToPianoTeq() {
 }
 
 async function headTracking(faces) {
-  const scale = Number(document.getElementById('scale').value);
+  const scale = Number(scaleSlider.value);
 
   const LEFT = 0;
   const RIGHT = 1;
@@ -86,11 +87,13 @@ async function headTracking(faces) {
     }
   });
 
-  headPos = {x: camera.video.width / 2, y: camera.video.height / 2};
+  headPos = {x: camera.video.width, y: camera.video.height};
   headPos.x -= ear[LEFT].x - Math.abs(ear[LEFT].x - ear[RIGHT].x) / 2;
   headPos.y -= ear[LEFT].y - Math.abs(ear[LEFT].y - ear[RIGHT].y) / 2;
-  headPos.x /= scale;
-  headPos.y /= scale;
+  headPos.x *= scale;
+  headPos.y *= scale;
+  headPos.x /= camera.video.width;
+  headPos.y /= camera.video.height;
 }
 
 async function checkGuiUpdate() {
