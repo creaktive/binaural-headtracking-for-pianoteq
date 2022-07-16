@@ -39,6 +39,8 @@ let lastPanelUpdate = 0;
 let rafId;
 let headPos = {x: 0, y: 0};
 const updateInterval = 1000 / 10; // 10 Hz
+const endpointUrl = document.getElementById('jsonrpc');
+const linkStatus = document.getElementById('link');
 
 async function sendToPianoTeq() {
   console.log(headPos);
@@ -55,12 +57,13 @@ async function sendToPianoTeq() {
     },
   };
 
-  const url = document.getElementById('jsonrpc').value;
+  const url = endpointUrl.value;
   fetch(url, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload),
-  }).then();
+  }).then(() => linkStatus.style = 'color: green')
+  .catch(() => linkStatus.style = 'color: red');
 
   setTimeout(sendToPianoTeq, updateInterval);
 }
