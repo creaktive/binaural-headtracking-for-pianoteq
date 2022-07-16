@@ -13,6 +13,7 @@ limitations under the License.
 <html>
 
 <head>
+  <title>Head tracking for PianoTeq</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
   <style>
@@ -35,6 +36,9 @@ limitations under the License.
       position: relative;
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+  <script src="src/index.js" async></script>
 </head>
 
 <body>
@@ -53,11 +57,11 @@ limitations under the License.
         </video>
       </div>
     </div>
-  </div>
+    <label for="scale">Scale:</label>
+    <input type="range" id="scale" name="scale" min="1" max="1000" step="any">
+    <label for="jsonrpc">PianoTeq JSON-RPC endpoint:</label>
+    <input type="url" id="jsonrpc" name="jsonrpc" value="http://localhost:8081/jsonrpc" size="64" required>
   </div>
 </body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
-<script src="src/index.js"></script>
 
 </html>

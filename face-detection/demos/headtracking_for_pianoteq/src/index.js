@@ -37,11 +37,37 @@ let numInferences = 0;
 let inferenceTimeSum = 0;
 let lastPanelUpdate = 0;
 let rafId;
+let headPos = {x: 0, y: 0};
+const updateInterval = 1000 / 10; // 10 Hz
 
-let frame = 0;
-const skip = 10;
+async function sendToPianoTeq() {
+  console.log(headPos);
 
-async function headTrackingToPianoteq(faces, scale = 400) {
+  const payload = {
+    id: 1,
+    jsonrpc: '2.0',
+    method: 'setParameters',
+    params: {
+      list: [
+        {'id': 'Head.X', 'name': 'Head X position', 'text': `${headPos.x}`},
+        {'id': 'Head.Y', 'name': 'Head Y position', 'text': `${headPos.y}`},
+      ],
+    },
+  };
+
+  const url = document.getElementById('jsonrpc').value;
+  fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  }).then();
+
+  setTimeout(sendToPianoTeq, updateInterval);
+}
+
+async function headTracking(faces) {
+  const scale = Number(document.getElementById('scale').value);
+
   const LEFT = 0;
   const RIGHT = 1;
   const ear = [
@@ -57,31 +83,11 @@ async function headTrackingToPianoteq(faces, scale = 400) {
     }
   });
 
-  const center = {x: camera.video.width / 2, y: camera.video.height / 2};
-  center.x -= ear[LEFT].x - Math.abs(ear[LEFT].x - ear[RIGHT].x) / 2;
-  center.y -= ear[LEFT].y - Math.abs(ear[LEFT].y - ear[RIGHT].y) / 2;
-  center.x /= scale;
-  center.y /= scale;
-
-  console.log(center);
-
-  const payload = {
-    id: 1,
-    jsonrpc: '2.0',
-    method: 'setParameters',
-    params: {
-      list: [
-        {'id': 'Head.X', 'name': 'Head X position', 'text': `${center.x}`},
-        {'id': 'Head.Y', 'name': 'Head Y position', 'text': `${center.y}`},
-      ],
-    },
-  };
-
-  fetch('http://localhost:8081/jsonrpc', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload),
-  }).then();
+  headPos = {x: camera.video.width / 2, y: camera.video.height / 2};
+  headPos.x -= ear[LEFT].x - Math.abs(ear[LEFT].x - ear[RIGHT].x) / 2;
+  headPos.y -= ear[LEFT].y - Math.abs(ear[LEFT].y - ear[RIGHT].y) / 2;
+  headPos.x /= scale;
+  headPos.y /= scale;
 }
 
 async function checkGuiUpdate() {
@@ -174,9 +180,8 @@ async function renderResult() {
   // different model. If during model change, the result is from an old model,
   // which shouldn't be rendered.
   if (faces && faces.length > 0 && !STATE.isModelChanged) {
-    if (frame++ % skip === 0) {
-      headTrackingToPianoteq(faces);
-    }
+    headTracking(faces);
+
     camera.drawResults(
         faces, STATE.modelConfig.boundingBox, STATE.modelConfig.keypoints);
   }
@@ -208,6 +213,8 @@ async function app() {
   await setBackendAndEnvFlags(STATE.flags, STATE.backend);
 
   detector = await createDetector();
+
+  setTimeout(sendToPianoTeq, updateInterval);
 
   renderPrediction();
 };
