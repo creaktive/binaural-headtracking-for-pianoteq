@@ -63,8 +63,8 @@ async function sendToPianoTeq() {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload),
-  }).then(() => linkStatus.style = 'color: green')
-  .catch(() => linkStatus.style = 'color: red');
+  }).then(() => linkStatus.className = 'link-ok')
+  .catch(() => linkStatus.className = 'link-fail');
 
   setTimeout(sendToPianoTeq, updateInterval);
 }
