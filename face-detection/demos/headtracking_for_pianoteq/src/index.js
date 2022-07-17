@@ -53,7 +53,7 @@ async function sendToPianoTeq() {
     params: {
       list: [
         {id: 'Head.X', name: 'Head X position', normalized_value: headPos.x},
-        {id: 'Head.Y', name: 'Head Y position', normalized_value: headPos.y},
+        {id: 'Head.Z', name: 'Head Z position', normalized_value: headPos.y},
       ],
     },
   };
@@ -87,13 +87,13 @@ async function headTracking(faces) {
     }
   });
 
-  headPos = {x: camera.video.width, y: camera.video.height};
+  headPos = {x: camera.video.width / 2, y: camera.video.height / 2};
   headPos.x -= ear[LEFT].x - Math.abs(ear[LEFT].x - ear[RIGHT].x) / 2;
   headPos.y -= ear[LEFT].y - Math.abs(ear[LEFT].y - ear[RIGHT].y) / 2;
-  headPos.x *= scale;
-  headPos.y *= scale;
-  headPos.x /= camera.video.width;
-  headPos.y /= camera.video.height;
+  headPos.x *= scale / camera.video.width;
+  headPos.y *= scale / camera.video.height;
+  headPos.x += 0.5;
+  headPos.y += 0.5;
 }
 
 async function checkGuiUpdate() {
