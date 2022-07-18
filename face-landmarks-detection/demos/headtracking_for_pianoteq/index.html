@@ -71,24 +71,22 @@ limitations under the License.
     </div>
     <div style="display: flex">
       <textarea id="payload" name="payload" cols="40" rows="30" readonly></textarea>
-      <div style="flex-grow: 1">
-        <div>
+      <div style="flex-grow: 1; margin-left: 10px">
+        <p>
           <label for="scale">Scale:</label>
           <br/>
           <input type="range" id="scale" name="scale" min="0.001" max="0.02" step="any" value="0.005">
-        </div>
-        <hr/>
-        <div>
+        </p>
+        <p>
           <label for="jsonrpc">PianoTeq JSON-RPC endpoint:</label>
           <br/>
           <input type="url" id="jsonrpc" name="jsonrpc" value="http://localhost:8081/jsonrpc" size="40" required>
-        </div>
-        <hr/>
-        <div>
+        </p>
+        <p>
           <label for="link">Link status:</label>
           <br/>
           <span id="link" class="link-inactive">&#x2B24;</span>
-        </div>
+        </p>
       </div>
     </div>
   </div>
