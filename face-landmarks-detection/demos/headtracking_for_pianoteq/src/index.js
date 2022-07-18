@@ -23,6 +23,8 @@ tfjsWasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
         tfjsWasm.version_wasm}/dist/`);
 
+import '@tensorflow-models/face-detection';
+
 import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE, createDetector} from './shared/params';
@@ -37,6 +39,7 @@ let numInferences = 0;
 let inferenceTimeSum = 0;
 let lastPanelUpdate = 0;
 let rafId;
+
 let headPos = {x: 0, y: 0};
 const updateInterval = 1000 / 10; // 10 Hz
 const endpointUrl = document.getElementById('jsonrpc');
@@ -53,6 +56,7 @@ async function sendToPianoTeq() {
     params: {
       list: [
         {id: 'Head.X', name: 'Head X position', normalized_value: headPos.x},
+        {id: 'Head.Y', name: 'Head Y position', normalized_value: headPos.z},
         {id: 'Head.Z', name: 'Head Z position', normalized_value: headPos.y},
       ],
     },
@@ -74,26 +78,49 @@ async function headTracking(faces) {
 
   const LEFT = 0;
   const RIGHT = 1;
-  const ear = [
-    {x: 0, y: 0},
-    {x: 0, y: 0},
+  const eye = [
+    {x: 0, y: 0, z: 0, n: 0},
+    {x: 0, y: 0, z: 0, n: 0},
   ];
 
   faces[0].keypoints.forEach((keypoint) => {
     switch (keypoint.name) {
-      case 'leftEarTragion': ear[LEFT] = keypoint; break;
-      case 'rightEarTragion': ear[RIGHT] = keypoint; break;
+      case 'leftIris':
+        eye[LEFT].x += keypoint.x;
+        eye[LEFT].y += keypoint.y;
+        eye[LEFT].z += keypoint.z;
+        eye[LEFT].n++;
+        break;
+      case 'rightIris':
+        eye[RIGHT].x += keypoint.x;
+        eye[RIGHT].y += keypoint.y;
+        eye[RIGHT].z += keypoint.z;
+        eye[RIGHT].n++;
+        break;
       default:
     }
   });
 
-  headPos = {x: camera.video.width / 2, y: camera.video.height / 2};
-  headPos.x -= ear[LEFT].x - Math.abs(ear[LEFT].x - ear[RIGHT].x) / 2;
-  headPos.y -= ear[LEFT].y - Math.abs(ear[LEFT].y - ear[RIGHT].y) / 2;
+  eye[LEFT].x /= eye[LEFT].n;
+  eye[LEFT].y /= eye[LEFT].n;
+  eye[LEFT].z /= eye[LEFT].n;
+  eye[RIGHT].x /= eye[RIGHT].n;
+  eye[RIGHT].y /= eye[RIGHT].n;
+  eye[RIGHT].z /= eye[RIGHT].n;
+
+  headPos = {x: camera.video.width / 2, y: camera.video.height / 2, z: 0};
+  headPos.x -= eye[LEFT].x - Math.abs(eye[LEFT].x - eye[RIGHT].x) / 2;
+  headPos.y -= eye[LEFT].y - Math.abs(eye[LEFT].y - eye[RIGHT].y) / 2;
+  headPos.z -= eye[LEFT].z - Math.abs(eye[LEFT].z - eye[RIGHT].z) / 2;
   headPos.x *= scale / camera.video.width;
   headPos.y *= scale / camera.video.height;
+  headPos.z *= scale / camera.video.width;
   headPos.x += 0.5;
   headPos.y += 0.5;
+  headPos.z += 0.5;
+  // headPos.x += 0.8;
+  // headPos.y += 1.5;
+  // headPos.z += -0.24;
 }
 
 async function checkGuiUpdate() {
@@ -189,7 +216,8 @@ async function renderResult() {
     headTracking(faces);
 
     camera.drawResults(
-        faces, STATE.modelConfig.boundingBox, STATE.modelConfig.keypoints);
+        faces, STATE.modelConfig.triangulateMesh,
+        STATE.modelConfig.boundingBox);
   }
 }
 
@@ -207,7 +235,7 @@ async function app() {
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
   if (!urlParams.has('model')) {
-    urlParams.append('model', 'mediapipe_face_detector');
+    urlParams.append('model', 'mediapipe_face_mesh');
   }
 
   await setupDatGui(urlParams);
