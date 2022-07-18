@@ -130,9 +130,9 @@ async function headTracking(faces) {
   headPos.z *= scale;
 
   // PianoTeq default offsets for the head
-  headPos.x += 0.8;
-  headPos.y += 1.5;
-  headPos.z += -0.24;
+  headPos.x += 0.620;
+  headPos.y += 1.300;
+  headPos.z += -0.36;
 }
 
 async function checkGuiUpdate() {
