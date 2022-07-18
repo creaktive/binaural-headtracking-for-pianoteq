@@ -55,9 +55,9 @@ async function sendToPianoTeq() {
     method: 'setParameters',
     params: {
       list: [
-        {id: 'Head.X', name: 'Head X position', normalized_value: headPos.x},
-        {id: 'Head.Y', name: 'Head Y position', normalized_value: headPos.z},
-        {id: 'Head.Z', name: 'Head Z position', normalized_value: headPos.y},
+        {id: 'Head.X', name: 'Head X position', text: String(headPos.x)},
+        {id: 'Head.Y', name: 'Head Y position', text: String(headPos.z)},
+        {id: 'Head.Z', name: 'Head Z position', text: String(headPos.y)},
       ],
     },
   };
@@ -112,15 +112,14 @@ async function headTracking(faces) {
   headPos.x -= eye[LEFT].x - Math.abs(eye[LEFT].x - eye[RIGHT].x) / 2;
   headPos.y -= eye[LEFT].y - Math.abs(eye[LEFT].y - eye[RIGHT].y) / 2;
   headPos.z -= eye[LEFT].z - Math.abs(eye[LEFT].z - eye[RIGHT].z) / 2;
-  headPos.x *= scale / camera.video.width;
-  headPos.y *= scale / camera.video.height;
-  headPos.z *= scale / camera.video.width;
-  headPos.x += 0.5;
-  headPos.y += 0.5;
-  headPos.z += 0.5;
-  // headPos.x += 0.8;
-  // headPos.y += 1.5;
-  // headPos.z += -0.24;
+  headPos.x *= scale;
+  headPos.y *= scale;
+  headPos.z *= scale;
+
+  // PianoTeq default offsets for the head
+  headPos.x += 0.8;
+  headPos.y += 1.5;
+  headPos.z += -0.24;
 }
 
 async function checkGuiUpdate() {
