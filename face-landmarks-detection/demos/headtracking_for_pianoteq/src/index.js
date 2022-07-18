@@ -45,6 +45,7 @@ const updateInterval = 1000 / 10; // 10 Hz
 const endpointUrl = document.getElementById('jsonrpc');
 const linkStatus = document.getElementById('link');
 const scaleSlider = document.getElementById('scale');
+const payloadPreview = document.getElementById('payload');
 
 async function sendToPianoTeq() {
   // console.log(headPos);
@@ -62,12 +63,14 @@ async function sendToPianoTeq() {
       ],
     },
   };
+  const payloadJSON = JSON.stringify(payload, null, 2);
+  payloadPreview.value = payloadJSON;
 
   const url = endpointUrl.value;
   fetch(url, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload),
+    body: payloadJSON,
   }).then(() => linkStatus.className = 'link-ok')
   .catch(() => linkStatus.className = 'link-fail');
 
