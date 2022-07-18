@@ -41,13 +41,14 @@ let lastPanelUpdate = 0;
 let rafId;
 
 let headPos = {x: 0, y: 0};
+let headAng = 0;
 const updateInterval = 1000 / 10; // 10 Hz
 const endpointUrl = document.getElementById('jsonrpc');
 const linkStatus = document.getElementById('link');
 const scaleSlider = document.getElementById('scale');
 
 async function sendToPianoTeq() {
-  console.log(headPos);
+  // console.log(headPos);
 
   const payload = {
     id: 1,
@@ -58,6 +59,7 @@ async function sendToPianoTeq() {
         {id: 'Head.X', name: 'Head X position', text: String(headPos.x)},
         {id: 'Head.Y', name: 'Head Y position', text: String(headPos.z)},
         {id: 'Head.Z', name: 'Head Z position', text: String(headPos.y)},
+        {id: 'Head Angle', name: 'Head Angle', text: String(headAng)},
       ],
     },
   };
@@ -107,6 +109,11 @@ async function headTracking(faces) {
   eye[RIGHT].x /= eye[RIGHT].n;
   eye[RIGHT].y /= eye[RIGHT].n;
   eye[RIGHT].z /= eye[RIGHT].n;
+
+  headAng = Math.atan2(eye[LEFT].x - eye[RIGHT].x, eye[LEFT].z - eye[RIGHT].z);
+  headAng *= 180 / Math.PI;
+  headAng -= 90;
+  headAng *= -1;
 
   headPos = {x: camera.video.width / 2, y: camera.video.height / 2, z: 0};
   headPos.x -= eye[LEFT].x - Math.abs(eye[LEFT].x - eye[RIGHT].x) / 2;
