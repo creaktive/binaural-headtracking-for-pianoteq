@@ -36,12 +36,16 @@ limitations under the License.
       position: relative;
     }
 
+    .link-inactive {
+      color: #ddd;
+    }
+
     .link-ok {
-      color: green;
+      color: #0d0;
     }
 
     .link-fail {
-      color: red;
+      color: #d00;
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
@@ -69,7 +73,7 @@ limitations under the License.
     <input type="range" id="scale" name="scale" min="0.001" max="0.02" step="any" value="0.005">
     <label for="jsonrpc">PianoTeq JSON-RPC endpoint:</label>
     <input type="url" id="jsonrpc" name="jsonrpc" value="http://localhost:8081/jsonrpc" size="60" required>
-    <span id="link">&#x2B24;</span>
+    <span id="link" class="link-inactive">&#x2B24;</span>
   </div>
 </body>
 

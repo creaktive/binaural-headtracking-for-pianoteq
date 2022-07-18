@@ -40,8 +40,7 @@ let inferenceTimeSum = 0;
 let lastPanelUpdate = 0;
 let rafId;
 
-let headPos = {x: 0, y: 0};
-let headAng = 0;
+let headPos = {x: 0, y: 0, z: 0, ang: 0};
 const updateInterval = 1000 / 10; // 10 Hz
 const endpointUrl = document.getElementById('jsonrpc');
 const linkStatus = document.getElementById('link');
@@ -59,7 +58,7 @@ async function sendToPianoTeq() {
         {id: 'Head.X', name: 'Head X position', text: String(headPos.x)},
         {id: 'Head.Y', name: 'Head Y position', text: String(headPos.z)},
         {id: 'Head.Z', name: 'Head Z position', text: String(headPos.y)},
-        {id: 'Head Angle', name: 'Head Angle', text: String(headAng)},
+        {id: 'Head Angle', name: 'Head Angle', text: String(headPos.ang)},
       ],
     },
   };
@@ -110,12 +109,16 @@ async function headTracking(faces) {
   eye[RIGHT].y /= eye[RIGHT].n;
   eye[RIGHT].z /= eye[RIGHT].n;
 
-  headAng = Math.atan2(eye[LEFT].x - eye[RIGHT].x, eye[LEFT].z - eye[RIGHT].z);
-  headAng *= 180 / Math.PI;
-  headAng -= 90;
-  headAng *= -1;
+  headPos.ang = Math.atan2(
+    eye[LEFT].x - eye[RIGHT].x,
+    eye[LEFT].z - eye[RIGHT].z
+  );
+  headPos.ang *= -180 / Math.PI;
+  headPos.ang += 90;
 
-  headPos = {x: camera.video.width / 2, y: camera.video.height / 2, z: 0};
+  headPos.x = camera.video.width / 2;
+  headPos.y = camera.video.height / 2;
+  headPos.z = 0;
   headPos.x -= eye[LEFT].x - Math.abs(eye[LEFT].x - eye[RIGHT].x) / 2;
   headPos.y -= eye[LEFT].y - Math.abs(eye[LEFT].y - eye[RIGHT].y) / 2;
   headPos.z -= eye[LEFT].z - Math.abs(eye[LEFT].z - eye[RIGHT].z) / 2;
