@@ -40,7 +40,7 @@ let inferenceTimeSum = 0;
 let lastPanelUpdate = 0;
 let rafId;
 
-const headSize = 0.18; // in meters
+let headSize = 0.18; // in meters
 let headPos = {x: 0, y: 0, z: 0, ang: 0};
 let updateInterval = 1000 / 10; // 10 Hz
 let sendPayload = false;
@@ -53,12 +53,37 @@ const freqSlider = document.getElementById('freq');
 const freqValue = document.getElementById('freq-value');
 const payloadText = document.getElementById('payload');
 const connectButton = document.getElementById('connect');
+const sendButton = document.getElementById('send');
 
 function disconnectPianoteq(className = 'link-inactive') {
   sendPayload = false;
   connectButton.innerText = 'Connect';
   linkStatus.className = className;
   payload.readonly = false;
+  sendButton.disabled = false;
+}
+
+async function getPianoteqParameters() {
+  const url = endpointUrl.value;
+  const payload = {
+    id: 1,
+    jsonrpc: '2.0',
+    method: 'getParameters',
+    params: {},
+  };
+  fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  }).then(async (response) => {
+    const responseJSON = await response.json();
+    const headDiameter = responseJSON.result
+      .find((result) => result.id === 'Head Diameter');
+    if (headDiameter != null) {
+      headSize = Number(headDiameter.text) / 100; // convert to meters
+    }
+    linkStatus.className = 'link-ok';
+  }).catch(() => disconnectPianoteq('link-fail') );
 }
 
 async function fireAndForget(payload) {
@@ -97,8 +122,8 @@ async function sendToPianoTeq() {
 }
 
 async function headTracking(faces) {
-  const LEFT_EAR = 234;
-  const RIGHT_EAR = 454;
+  const RIGHT_EAR = 234;
+  const LEFT_EAR = 454;
 
   const kp = faces[0].keypoints;
 
@@ -256,17 +281,19 @@ async function app() {
 
   detector = await createDetector();
 
-  connectButton.onclick = () => {
+  connectButton.onclick = async () => {
     if (sendPayload) {
       disconnectPianoteq();
     } else {
       sendPayload = true;
       connectButton.innerText = 'Disconnect';
       payload.readonly = true;
+      sendButton.disabled = true;
+      await getPianoteqParameters();
     }
   };
 
-  document.getElementById('send').onclick = () => {
+  sendButton.onclick = async () => {
     fireAndForget(payloadText.value);
   };
 
