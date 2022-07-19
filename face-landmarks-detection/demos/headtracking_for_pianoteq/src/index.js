@@ -41,16 +41,40 @@ let lastPanelUpdate = 0;
 let rafId;
 
 let headPos = {x: 0, y: 0, z: 0, ang: 0};
-const updateInterval = 1000 / 10; // 10 Hz
+let updateFreq = 10; // 10 Hz
+let sendPayload = false;
+
 const endpointUrl = document.getElementById('jsonrpc');
 const linkStatus = document.getElementById('link');
 const scaleSlider = document.getElementById('scale');
-const payloadPreview = document.getElementById('payload');
+const freqSlider = document.getElementById('freq');
+const freqValue = document.getElementById('freq-value');
+const payloadText = document.getElementById('payload');
+const connectButton = document.getElementById('connect');
+
+function disconnectPianoteq(className = 'link-inactive') {
+  sendPayload = false;
+  connectButton.innerHTML = 'Connect';
+  linkStatus.className = className;
+  payload.readonly = false;
+}
+
+async function fireAndForget(payload) {
+  const url = endpointUrl.value;
+  fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: payload,
+  }).then(() => linkStatus.className = 'link-ok')
+  .catch(() => disconnectPianoteq('link-fail') );
+}
 
 async function sendToPianoTeq() {
+  setTimeout(sendToPianoTeq, updateFreq);
+  if (!sendPayload) return;
   // console.log(headPos);
 
-  const payload = {
+  const payloadData = {
     id: 1,
     jsonrpc: '2.0',
     method: 'setParameters',
@@ -63,18 +87,11 @@ async function sendToPianoTeq() {
       ],
     },
   };
-  const payloadJSON = JSON.stringify(payload, null, 2);
-  payloadPreview.value = payloadJSON;
 
-  const url = endpointUrl.value;
-  fetch(url, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: payloadJSON,
-  }).then(() => linkStatus.className = 'link-ok')
-  .catch(() => linkStatus.className = 'link-fail');
+  const payloadJSON = JSON.stringify(payloadData, null, 2);
 
-  setTimeout(sendToPianoTeq, updateInterval);
+  payloadText.value = payloadJSON;
+  fireAndForget(payloadJSON);
 }
 
 async function headTracking(faces) {
@@ -113,11 +130,10 @@ async function headTracking(faces) {
   eye[RIGHT].z /= eye[RIGHT].n;
 
   headPos.ang = Math.atan2(
-    eye[LEFT].x - eye[RIGHT].x,
-    eye[LEFT].z - eye[RIGHT].z
+    eye[LEFT].z - eye[RIGHT].z,
+    eye[LEFT].x - eye[RIGHT].x
   );
-  headPos.ang *= -180 / Math.PI;
-  headPos.ang += 90;
+  headPos.ang *= 180 / Math.PI;
 
   headPos.x = camera.video.width / 2;
   headPos.y = camera.video.height / 2;
@@ -260,7 +276,26 @@ async function app() {
 
   detector = await createDetector();
 
-  setTimeout(sendToPianoTeq, updateInterval);
+  connectButton.onclick = () => {
+    if (sendPayload) {
+      disconnectPianoteq();
+    } else {
+      sendPayload = true;
+      connectButton.innerHTML = 'Disconnect';
+      payload.readonly = true;
+    }
+  };
+
+  document.getElementById('send').onclick = () => {
+    fireAndForget(payloadText.value);
+  };
+
+  freqSlider.onchange = () => {
+    updateFreq = 1000 / Number(freqSlider.value);
+    freqValue.innerText = `${freqSlider.value} Hz`;
+  };
+
+  setTimeout(sendToPianoTeq, updateFreq);
 
   renderPrediction();
 };
