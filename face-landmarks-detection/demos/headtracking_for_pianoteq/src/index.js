@@ -64,18 +64,19 @@ function disconnectPianoteq(className = 'link-inactive') {
 }
 
 async function getPianoteqParameters() {
-  const url = endpointUrl.value;
   const payload = {
     id: 1,
     jsonrpc: '2.0',
     method: 'getParameters',
     params: {},
   };
-  fetch(url, {
+  fetch(endpointUrl.value, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload),
   }).then(async (response) => {
+    if (response.status !== 200) return disconnectPianoteq('link-fail');
+
     const responseJSON = await response.json();
     const headDiameter = responseJSON.result
       .find((result) => result.id === 'Head Diameter');
@@ -87,12 +88,14 @@ async function getPianoteqParameters() {
 }
 
 async function fireAndForget(payload) {
-  const url = endpointUrl.value;
-  fetch(url, {
+  fetch(endpointUrl.value, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: payload,
-  }).then(() => linkStatus.className = 'link-ok')
+  }).then((response) => {
+    if (response.status !== 200) return disconnectPianoteq('link-fail');
+    linkStatus.className = 'link-ok';
+  })
   .catch(() => disconnectPianoteq('link-fail') );
 }
 
