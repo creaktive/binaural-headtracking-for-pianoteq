@@ -40,6 +40,7 @@ let inferenceTimeSum = 0;
 let lastPanelUpdate = 0;
 let rafId;
 
+const distanceBetweenPupils = 0.065; // in meters
 let headPos = {x: 0, y: 0, z: 0, ang: 0};
 let updateInterval = 1000 / 10; // 10 Hz
 let sendPayload = false;
@@ -47,6 +48,7 @@ let sendPayload = false;
 const endpointUrl = document.getElementById('jsonrpc');
 const linkStatus = document.getElementById('link');
 const scaleSlider = document.getElementById('scale');
+const scaleValue = document.getElementById('scale-value');
 const freqSlider = document.getElementById('freq');
 const freqValue = document.getElementById('freq-value');
 const payloadText = document.getElementById('payload');
@@ -54,7 +56,7 @@ const connectButton = document.getElementById('connect');
 
 function disconnectPianoteq(className = 'link-inactive') {
   sendPayload = false;
-  connectButton.innerHTML = 'Connect';
+  connectButton.innerText = 'Connect';
   linkStatus.className = className;
   payload.readonly = false;
 }
@@ -95,8 +97,6 @@ async function sendToPianoTeq() {
 }
 
 async function headTracking(faces) {
-  const scale = Number(scaleSlider.value);
-
   const LEFT = 0;
   const RIGHT = 1;
   const eye = [
@@ -128,6 +128,14 @@ async function headTracking(faces) {
   eye[RIGHT].x /= eye[RIGHT].n;
   eye[RIGHT].y /= eye[RIGHT].n;
   eye[RIGHT].z /= eye[RIGHT].n;
+
+  const eyesDistance = Math.sqrt(
+    Math.pow(eye[LEFT].x - eye[RIGHT].x, 2) +
+    Math.pow(eye[LEFT].y - eye[RIGHT].y, 2) +
+    Math.pow(eye[LEFT].z - eye[RIGHT].z, 2)
+  );
+  const scale = Number(scaleSlider.value)
+    * distanceBetweenPupils / eyesDistance;
 
   headPos.ang = Math.atan2(
     eye[LEFT].z - eye[RIGHT].z,
@@ -281,7 +289,7 @@ async function app() {
       disconnectPianoteq();
     } else {
       sendPayload = true;
-      connectButton.innerHTML = 'Disconnect';
+      connectButton.innerText = 'Disconnect';
       payload.readonly = true;
     }
   };
@@ -289,6 +297,8 @@ async function app() {
   document.getElementById('send').onclick = () => {
     fireAndForget(payloadText.value);
   };
+
+  scaleSlider.oninput = () => scaleValue.innerText = `x${scaleSlider.value}`;
 
   freqSlider.oninput = () => {
     updateInterval = 1000 / Number(freqSlider.value);
