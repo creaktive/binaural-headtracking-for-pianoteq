@@ -41,7 +41,7 @@ let lastPanelUpdate = 0;
 let rafId;
 
 let headPos = {x: 0, y: 0, z: 0, ang: 0};
-let updateFreq = 10; // 10 Hz
+let updateInterval = 1000 / 10; // 10 Hz
 let sendPayload = false;
 
 const endpointUrl = document.getElementById('jsonrpc');
@@ -70,7 +70,7 @@ async function fireAndForget(payload) {
 }
 
 async function sendToPianoTeq() {
-  setTimeout(sendToPianoTeq, updateFreq);
+  setTimeout(sendToPianoTeq, updateInterval);
   if (!sendPayload) return;
   // console.log(headPos);
 
@@ -290,12 +290,12 @@ async function app() {
     fireAndForget(payloadText.value);
   };
 
-  freqSlider.onchange = () => {
-    updateFreq = 1000 / Number(freqSlider.value);
+  freqSlider.oninput = () => {
+    updateInterval = 1000 / Number(freqSlider.value);
     freqValue.innerText = `${freqSlider.value} Hz`;
   };
 
-  setTimeout(sendToPianoTeq, updateFreq);
+  setTimeout(sendToPianoTeq, updateInterval);
 
   renderPrediction();
 };
