@@ -40,7 +40,7 @@ let inferenceTimeSum = 0;
 let lastPanelUpdate = 0;
 let rafId;
 
-const distanceBetweenPupils = 0.065; // in meters
+const headSize = 0.18; // in meters
 let headPos = {x: 0, y: 0, z: 0, ang: 0};
 let updateInterval = 1000 / 10; // 10 Hz
 let sendPayload = false;
@@ -97,58 +97,30 @@ async function sendToPianoTeq() {
 }
 
 async function headTracking(faces) {
-  const LEFT = 0;
-  const RIGHT = 1;
-  const eye = [
-    {x: 0, y: 0, z: 0, n: 0},
-    {x: 0, y: 0, z: 0, n: 0},
-  ];
+  const LEFT_EAR = 234;
+  const RIGHT_EAR = 454;
 
-  faces[0].keypoints.forEach((keypoint) => {
-    switch (keypoint.name) {
-      case 'leftIris':
-        eye[LEFT].x += keypoint.x;
-        eye[LEFT].y += keypoint.y;
-        eye[LEFT].z += keypoint.z;
-        eye[LEFT].n++;
-        break;
-      case 'rightIris':
-        eye[RIGHT].x += keypoint.x;
-        eye[RIGHT].y += keypoint.y;
-        eye[RIGHT].z += keypoint.z;
-        eye[RIGHT].n++;
-        break;
-      default:
-    }
-  });
-
-  eye[LEFT].x /= eye[LEFT].n;
-  eye[LEFT].y /= eye[LEFT].n;
-  eye[LEFT].z /= eye[LEFT].n;
-  eye[RIGHT].x /= eye[RIGHT].n;
-  eye[RIGHT].y /= eye[RIGHT].n;
-  eye[RIGHT].z /= eye[RIGHT].n;
+  const kp = faces[0].keypoints;
 
   const eyesDistance = Math.sqrt(
-    Math.pow(eye[LEFT].x - eye[RIGHT].x, 2) +
-    Math.pow(eye[LEFT].y - eye[RIGHT].y, 2) +
-    Math.pow(eye[LEFT].z - eye[RIGHT].z, 2)
+    Math.pow(kp[LEFT_EAR].x - kp[RIGHT_EAR].x, 2) +
+    Math.pow(kp[LEFT_EAR].y - kp[RIGHT_EAR].y, 2) +
+    Math.pow(kp[LEFT_EAR].z - kp[RIGHT_EAR].z, 2)
   );
-  const scale = Number(scaleSlider.value)
-    * distanceBetweenPupils / eyesDistance;
+  const scale = Number(scaleSlider.value) * headSize / eyesDistance;
 
   headPos.ang = Math.atan2(
-    eye[LEFT].z - eye[RIGHT].z,
-    eye[LEFT].x - eye[RIGHT].x
+    kp[LEFT_EAR].z - kp[RIGHT_EAR].z,
+    kp[LEFT_EAR].x - kp[RIGHT_EAR].x
   );
   headPos.ang *= 180 / Math.PI;
 
   headPos.x = camera.video.width / 2;
   headPos.y = camera.video.height / 2;
   headPos.z = 0;
-  headPos.x -= eye[LEFT].x - Math.abs(eye[LEFT].x - eye[RIGHT].x) / 2;
-  headPos.y -= eye[LEFT].y - Math.abs(eye[LEFT].y - eye[RIGHT].y) / 2;
-  headPos.z -= eye[LEFT].z - Math.abs(eye[LEFT].z - eye[RIGHT].z) / 2;
+  headPos.x -= kp[LEFT_EAR].x - Math.abs(kp[LEFT_EAR].x - kp[RIGHT_EAR].x) / 2;
+  headPos.y -= kp[LEFT_EAR].y - Math.abs(kp[LEFT_EAR].y - kp[RIGHT_EAR].y) / 2;
+  headPos.z -= kp[LEFT_EAR].z - Math.abs(kp[LEFT_EAR].z - kp[RIGHT_EAR].z) / 2;
   headPos.x *= scale;
   headPos.y *= scale;
   headPos.z *= scale;
