@@ -55,7 +55,7 @@ const payloadText = document.getElementById('payload');
 const connectButton = document.getElementById('connect');
 const sendButton = document.getElementById('send');
 
-function disconnectPianoteq(className = 'link-inactive') {
+function disconnectPianoteq(className = 'link-fail') {
   sendPayload = false;
   connectButton.innerText = 'Connect';
   linkStatus.className = className;
@@ -75,7 +75,7 @@ async function getPianoteqParameters() {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload),
   }).then(async (response) => {
-    if (response.status !== 200) return disconnectPianoteq('link-fail');
+    if (response.status !== 200) return disconnectPianoteq();
 
     const responseJSON = await response.json();
     const headDiameter = responseJSON.result
@@ -84,7 +84,7 @@ async function getPianoteqParameters() {
       headSize = Number(headDiameter.text) / 100; // convert to meters
     }
     linkStatus.className = 'link-ok';
-  }).catch(() => disconnectPianoteq('link-fail') );
+  }).catch(() => disconnectPianoteq() );
 }
 
 async function fireAndForget(payload) {
@@ -93,10 +93,10 @@ async function fireAndForget(payload) {
     headers: {'Content-Type': 'application/json'},
     body: payload,
   }).then((response) => {
-    if (response.status !== 200) return disconnectPianoteq('link-fail');
+    if (response.status !== 200) return disconnectPianoteq();
     linkStatus.className = 'link-ok';
   })
-  .catch(() => disconnectPianoteq('link-fail') );
+  .catch(() => disconnectPianoteq() );
 }
 
 async function sendToPianoTeq() {
@@ -286,7 +286,7 @@ async function app() {
 
   connectButton.onclick = async () => {
     if (sendPayload) {
-      disconnectPianoteq();
+      disconnectPianoteq('link-inactive');
     } else {
       sendPayload = true;
       connectButton.innerText = 'Disconnect';
